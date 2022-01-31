@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_core/firebase_core.dart';
 
 class Home extends StatefulWidget {
   const Home({Key? key}) : super(key: key);
@@ -9,13 +11,19 @@ class Home extends StatefulWidget {
 
 class _HomeState extends State<Home> {
   String? _userToDo;
-
   List todoList = [];
+
+  void initFirebase() async {
+    WidgetsFlutterBinding.ensureInitialized();
+    await Firebase.initializeApp();
+  }
 
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
+
+    initFirebase();
 
     todoList.addAll(['Buy meat', 'Open window', 'Change money']);
   }
@@ -43,7 +51,6 @@ class _HomeState extends State<Home> {
       );
     }));
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -103,9 +110,14 @@ class _HomeState extends State<Home> {
                   actions: [
                     ElevatedButton(
                         onPressed: () {
-                          setState(() {
-                            todoList.add(_userToDo);
-                          });
+                          //setState(() {
+                          // todoList.add(_userToDo);
+                          //});
+
+                          FirebaseFirestore.instance
+                              .collection('items')
+                              .add({'item': _userToDo});
+
                           Navigator.of(context).pop();
                         },
                         child: Text('Add'))
