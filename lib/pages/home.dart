@@ -66,34 +66,45 @@ class _HomeState extends State<Home> {
           ),
         ],
       ),
-      body: ListView.builder(
-          itemCount: todoList.length,
-          itemBuilder: (BuildContext context, int index) {
-            return Dismissible(
-              key: Key(todoList[index]),
-              child: Card(
-                child: ListTile(
-                    title: Text(todoList[index]),
-                    trailing: IconButton(
-                      onPressed: () {
-                        setState(() {
-                          todoList.removeAt(index);
-                        });
-                      },
-                      icon: Icon(
-                        Icons.delete_sweep,
-                        color: Colors.deepOrangeAccent,
-                      ),
-                    )),
-              ),
-              onDismissed: (direction) {
-                //if (direction == DismissDirection.endToStart)
-                setState(() {
-                  todoList.removeAt(index);
-                });
-              },
-            );
-          }),
+      body: StreamBuilder(
+        stream: FirebaseFirestore.instance.collection('items').snapshots(),
+        builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
+          if (!snapshot.hasData) return Text('No records');
+          return ListView.builder(
+              itemCount: snapshot.data?.docs.length,
+              itemBuilder: (BuildContext context, int index) {
+                return Dismissible(
+                  key: Key(snapshot.data!.docs[index].id),
+                  child: Card(
+                    child: ListTile(
+                        title: Text(snapshot.data?.docs[index].get('item')),
+                        trailing: IconButton(
+                          onPressed: () {
+                            FirebaseFirestore.instance
+                                .collection('items')
+                                .doc(snapshot.data!.docs[index].id)
+                                .delete();
+                          },
+                          icon: Icon(
+                            Icons.delete_sweep,
+                            color: Colors.deepOrangeAccent,
+                          ),
+                        )),
+                  ),
+                  onDismissed: (direction) {
+                    //if (direction == DismissDirection.endToStart)
+                    //setState(() {
+                    //  todoList.removeAt(index);
+                    //});
+                    FirebaseFirestore.instance
+                                .collection('items')
+                                .doc(snapshot.data!.docs[index].id)
+                                .delete();
+                  },
+                );
+              });
+        },
+      ),
       floatingActionButton: FloatingActionButton(
         backgroundColor: Colors.greenAccent,
         onPressed: () {
